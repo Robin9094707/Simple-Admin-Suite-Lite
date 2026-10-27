@@ -27,7 +27,9 @@ final class VanillaExport {
         for(Entry entry:plan.entries()){
             Rule r=entry.rule();if(!r.active(System.currentTimeMillis()))continue;Date expires=r.until()==0?null:new Date(r.until());
             if(entry.id()!=null){
-                var profile=Bukkit.createPlayerProfile(entry.id(),entry.name().isBlank()?null:entry.name());
+                // Imported UUID-only records and Floodgate display names are not always valid Java names.
+                String name=entry.name().matches("[A-Za-z0-9_]{1,16}")?entry.name():null;
+                var profile=Bukkit.createPlayerProfile(entry.id(),name);
                 if(existingStronger(accounts.getBanEntry(profile),r))continue;
                 accounts.addBan(profile,r.reason(),expires,actor);count++;
             }else{

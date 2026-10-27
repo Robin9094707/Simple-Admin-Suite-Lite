@@ -21,7 +21,7 @@ final class Updates {
     private final HttpClient http=HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(15)).followRedirects(HttpClient.Redirect.NEVER).build();
     private final AtomicBoolean busy=new AtomicBoolean();
     volatile String status="Not checked yet";volatile List<String> ready=List.of();
-    record Installed(String project,String name,String version,Path file,Path stage,String serverVersion){}
+    record Installed(String project,String name,String version,Path file,Path stage,String serverVersion,boolean viaVersion){}
     Updates(SimpleAdminLite plugin){this.plugin=plugin;}
     void check(){
         if(!busy.compareAndSet(false,true))return;
@@ -33,7 +33,8 @@ final class Updates {
                 Plugin dependency=Bukkit.getPluginManager().getPlugin(project.equals("geyser")?"Geyser-Spigot":"floodgate");
                 if(dependency==null)continue;
                 Path original=findOriginal(dir,dependency.getName(),dependency.getDescription().getVersion());
-                if(original!=null)installed.add(new Installed(project,dependency.getName(),dependency.getDescription().getVersion(),original,stage,Bukkit.getBukkitVersion()));
+                Plugin via=Bukkit.getPluginManager().getPlugin("ViaVersion");
+                if(original!=null)installed.add(new Installed(project,dependency.getName(),dependency.getDescription().getVersion(),original,stage,Bukkit.getBukkitVersion(),via!=null&&via.isEnabled()));
             }
         }catch(Exception error){status="Update check unavailable: "+Model.clean(error.getMessage(),200);busy.set(false);return;}
         status="Checking official Geyser/Floodgate builds...";
@@ -56,6 +57,7 @@ final class Updates {
         }return null;
     }
     private String stage(Installed item) throws Exception {
+        if(item.project().equals("geyser")&&compareVersion(item.serverVersion().split("-")[0],"26.3")<0&&!item.viaVersion())throw new IOException("Current Geyser requires ViaVersion on this older Java server. Install ViaVersion before staging a new Geyser build.");
         URI meta=URI.create("https://download.geysermc.org/v2/projects/"+item.project()+"/versions/latest/builds/latest");
         HttpResponse<InputStream> response=http.send(request(meta,30),HttpResponse.BodyHandlers.ofInputStream());byte[] json;
         try(InputStream in=response.body()){if(response.statusCode()!=200)throw new IOException("Metadata HTTP "+response.statusCode());json=in.readNBytes(1048577);}

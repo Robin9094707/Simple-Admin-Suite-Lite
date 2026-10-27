@@ -4,7 +4,7 @@ An independent, English-only Paper security plugin with native Java inventory me
 
 ## Scope
 
-- `/sal` opens the security dashboard. Operators have full access automatically. Other accounts need explicit permissions; none are granted to ordinary players by default.
+- `/sal` opens the security dashboard. Full level-4 operators have access automatically. Other accounts need explicit permissions; none are granted to ordinary players by default.
 - Local UUID-based player profiles, online/offline player browsing, client insight, bounded IP history and reported Bedrock device history.
 - Real account bans, ultra bans, exact IP bans, individual device blocks, timed bans and immediate kicks.
 - Alternative-account evidence, strong account groups, explicit confirmed/excluded links and optional inherited sanctions.

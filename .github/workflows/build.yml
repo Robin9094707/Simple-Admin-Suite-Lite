@@ -22,6 +22,8 @@ jobs:
       - name: Build both JARs, test security behavior, compile both Paper API generations
         run: python3 tools/build.py all --test --compatibility
       - name: Start real Paper 1.21.11
+        env:
+          JAVA_HOME: ${{ env.JAVA_HOME_21_X64 }}
         run: python3 tools/smoke.py --version 1.21.11
       - name: Start real Paper 26.3 with Geyser, Floodgate and the Simple bridge
         run: python3 tools/smoke.py --version 26.3 --crossplay
@@ -30,7 +32,7 @@ jobs:
           python3 - <<'PY'
           import pathlib, xml.etree.ElementTree as E
           count = sum(int(E.parse(p).getroot().attrib.get('tests','0')) for p in pathlib.Path('build/test-results').glob('TEST-*.xml'))
-          pathlib.Path('dist/VALIDATION-RESULTS.txt').write_text(f'PASS: {count} automated tests.\nPASS: real Paper API 1.21.11 and 26.3 compilation.\nPASS: Paper 1.21.11 startup/reload/ban/unban/persistence/shutdown.\nPASS: Paper 26.3 plus Geyser 2.12.1-1273, Floodgate 2.2.5-141 and SimpleSentinelBridge startup.\nNative Cumulus builder APIs were exercised. No real Java/Bedrock player session or deployment-specific proxy/LuckPerms setup was tested.\nFuture server/API versions require validation.\n')
+          pathlib.Path('dist/VALIDATION-RESULTS.txt').write_text(f'PASS: {count} automated tests.\nPASS: real Paper API 1.21.11 and 26.3 compilation.\nPASS: Paper 1.21.11 on Java 21: startup/reload/ban/unban/persistence/vanilla-export/shutdown.\nPASS: Paper 26.3 on Java 25 plus Geyser 2.12.1-1273, Floodgate 2.2.5-141 and SimpleSentinelBridge startup.\nPASS: authenticated HTTP bridge response and replay rejection.\nNative Cumulus builder APIs were exercised. No real Java/Bedrock player session or deployment-specific proxy/LuckPerms setup was tested.\nFuture server/API versions require validation.\n')
           PY
       - uses: actions/upload-artifact@v4
         with:

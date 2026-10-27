@@ -20,6 +20,8 @@ imports:
   # Use a consistent, closed local snapshot; Lite opens it read-only and never migrates it.
   litebans-file: plugins/LiteBans/litebans.mv.db
   litebans-table-prefix: litebans_
+  h2-username: sa
+  h2-password: ''
 discord-webhook:
   enabled: false
   url: ''

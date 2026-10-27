@@ -42,6 +42,9 @@ public final class BanTransfer {
         try{return Instant.parse(value).toEpochMilli();}catch(DateTimeException e){throw new IllegalArgumentException("Unsupported ban expiry: "+value);}
     }
     public static Preview liteBans(Path file,String prefix,String actor) throws Exception {
+        return liteBans(file,prefix,actor,"sa","");
+    }
+    public static Preview liteBans(Path file,String prefix,String actor,String username,String password) throws Exception {
         if(!prefix.matches("[A-Za-z0-9_]{0,50}"))throw new IllegalArgumentException("Invalid LiteBans table prefix");
         Path source=file.toRealPath();if(!Files.isRegularFile(source))throw new IOException("LiteBans database file not found");
         String filename=source.getFileName().toString().toLowerCase(Locale.ROOT);String url;
@@ -52,7 +55,7 @@ public final class BanTransfer {
         }else if(filename.endsWith(".db")||filename.endsWith(".sqlite")||filename.endsWith(".sqlite3")){
             Class.forName("org.sqlite.JDBC");url="jdbc:sqlite:"+source.toUri()+"?mode=ro";
         }else throw new IOException("Supported local databases: H2 .mv.db or SQLite .db/.sqlite. Supply a closed, consistent database snapshot; remote SQL is not accessed.");
-        try(Connection connection=DriverManager.getConnection(url,filename.endsWith(".mv.db")?"sa":"","")){
+        try(Connection connection=DriverManager.getConnection(url,filename.endsWith(".mv.db")?username:"",filename.endsWith(".mv.db")?password:"")){
             return liteBans(connection,prefix,source.toString(),actor);
         }catch(SQLException e){throw new IOException("Cannot read the LiteBans database snapshot. Stop LiteBans before copying it. Encrypted or older incompatible H2 files require a compatible export. "+clean(e.getMessage(),180),e);}
     }

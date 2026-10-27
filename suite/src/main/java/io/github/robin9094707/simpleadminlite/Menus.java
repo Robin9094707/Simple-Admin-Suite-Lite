@@ -234,7 +234,8 @@ final class Menus implements Listener {
         }));
         b.add(button(p,"Inspect a LiteBans database","Read a closed H2 or SQLite snapshot from the configured LiteBans folder; no source data is modified.",Material.HOPPER,"transfer",()->{
             Path path=Path.of(plugin.getConfig().getString("imports.litebans-file","plugins/LiteBans/litebans.mv.db")).toAbsolutePath().normalize();String prefix=plugin.getConfig().getString("imports.litebans-table-prefix","litebans_");
-            plugin.tell(p,"Reading the LiteBans snapshot for preview...");plugin.task(p,()->BanTransfer.liteBans(path,prefix,p.getName()),preview->{imports.put(p.getUniqueId(),new Selection(preview));importMenu(p);});
+            String user=plugin.getConfig().getString("imports.h2-username","sa"),password=plugin.getConfig().getString("imports.h2-password","");
+            plugin.tell(p,"Reading the LiteBans snapshot for preview...");plugin.task(p,()->BanTransfer.liteBans(path,prefix,p.getName(),user,password),preview->{if(plugin.require(p,"transfer")){imports.put(p.getUniqueId(),new Selection(preview));importMenu(p);}});
         }));
         if(imports.containsKey(p.getUniqueId()))b.add(button(p,"Continue import preview","Your current selections expire after ten minutes",Material.MAP,"transfer",()->importMenu(p)));
         b.add(button(p,"Preview Minecraft export","Export known active account bans, known linked accounts and exact IP bans using Bukkit's ban lists",Material.CHEST,"transfer",()->exportMenu(p)));
@@ -295,5 +296,5 @@ final class Menus implements Listener {
     private void saveSetting(Player p,String path,Object value){
         if(!plugin.require(p,"settings"))return;plugin.getConfig().set(path,value);plugin.saveConfig();plugin.audit(p.getName(),"SETTING",path);plugin.onCommand(p,plugin.getCommand("sal"),"sal",new String[]{"reload"});settings(p);
     }
-    private void audit(Player p){plugin.task(p,()->plugin.store.audit(100),lines->detail(p,"Security audit",String.join("\n",lines),()->home(p)));}
+    private void audit(Player p){plugin.task(p,()->plugin.store.audit(100),lines->{if(plugin.require(p,"audit"))detail(p,"Security audit",String.join("\n",lines),()->home(p));});}
 }

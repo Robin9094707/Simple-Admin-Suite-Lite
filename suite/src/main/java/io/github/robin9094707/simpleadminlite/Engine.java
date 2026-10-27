@@ -36,7 +36,7 @@ public final class Engine {
     public synchronized Rule rule(String id){return rules.get(id);}
     public synchronized void reloadRules() throws Exception {rules.clear();for(Rule r:store.rules())rules.put(r.id(),r);revision++;}
     public synchronized Profile observe(UUID id,String name,String platform,String ip,Map<String,String> metadata,Collection<String> identityTokens,long now,int historyLimit) throws Exception {
-        Profile old=profiles.get(id);Map<String,String> client=new LinkedHashMap<>();if(old!=null)client.putAll(old.client());client.putAll(metadata);
+        Profile old=profiles.get(id);Map<String,String> client=new LinkedHashMap<>();if(old!=null&&old.platform().equals(platform))client.putAll(old.client());client.putAll(metadata);
         LinkedHashMap<String,Seen> history=new LinkedHashMap<>();if(old!=null)for(Seen s:old.history())history.put(s.token(),s);
         Set<String> tokens=new LinkedHashSet<>(identityTokens);if(ip!=null&&!ip.isBlank())tokens.add("ip:"+Model.ip(ip));
         for(String token:tokens){

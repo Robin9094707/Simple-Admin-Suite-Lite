@@ -9,6 +9,9 @@ import org.bukkit.event.block.*;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.player.*;
 import org.bukkit.event.inventory.InventoryOpenEvent;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
+import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.permissions.PermissionAttachment;
 import org.bukkit.plugin.java.JavaPlugin;
 import java.io.*;
@@ -28,8 +31,11 @@ public final class SimpleAdminLite extends JavaPlugin implements Listener,Comman
     private final Map<UUID,PermissionAttachment> attachments=new HashMap<>();
     private final ConcurrentMap<UUID,Set<String>> currentTokens=new ConcurrentHashMap<>();
     private final ConcurrentMap<String,Long> webhookLimits=new ConcurrentHashMap<>();
+    private final Map<String,ExportRequest> exportRequests=new HashMap<>();
+    private record ExportRequest(String token,VanillaExport.Plan plan){}
     private volatile String prefix="§8[§bSimple§8] §f",identitySecret="",webhook="";
     private boolean autoUpdates;private int refreshTick;
+    private final OperatorAccess operators=new OperatorAccess(Path.of("ops.json"));
     private final HttpClient webHttp=HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
     @Override public void onEnable(){
         try{
@@ -77,7 +83,7 @@ public final class SimpleAdminLite extends JavaPlugin implements Listener,Comman
         if(io!=null){io.shutdown();try{if(!io.awaitTermination(10,TimeUnit.SECONDS))getLogger().severe("Storage work is still pending during shutdown.");}catch(InterruptedException e){Thread.currentThread().interrupt();}}
         if(store!=null)try{store.close();}catch(Exception e){getLogger().warning("Database close failed: "+e.getMessage());}
     }
-    boolean allowed(CommandSender sender,String action){return sender.isOp()||sender.hasPermission("simpleadminlite.admin")||sender.hasPermission("simpleadminlite."+action);}
+    boolean allowed(CommandSender sender,String action){return sender instanceof ConsoleCommandSender||sender instanceof RemoteConsoleCommandSender||sender instanceof Player p&&p.isOp()&&operators.full(p.getUniqueId())||sender.hasPermission("simpleadminlite.admin")||sender.hasPermission("simpleadminlite."+action);}
     boolean require(CommandSender sender,String action){if(allowed(sender,action))return true;tell(sender,"You do not have permission: simpleadminlite."+action);return false;}
     void tell(CommandSender sender,String text){sender.sendMessage(prefix+text);}
     void sync(Runnable work){if(!isEnabled())return;if(Bukkit.isPrimaryThread())work.run();else try{Bukkit.getScheduler().runTask(this,work);}catch(IllegalStateException ignored){}}
@@ -120,6 +126,7 @@ public final class SimpleAdminLite extends JavaPlugin implements Listener,Comman
         if(!player.isOnline())return;UUID id=player.getUniqueId();String name=player.getName(),ip=player.getAddress()==null?"":player.getAddress().getAddress().getHostAddress();
         boolean bedrock=crossplay.bedrock(id);Map<String,String>metadata=new LinkedHashMap<>();Set<String>tokens=new LinkedHashSet<>();
         if(bedrock){
+            for(String key:List.of("deviceModel","deviceOs","gameVersion","languageCode","currentInputMode","defaultInputMode","uiProfile","collectionSource","bridgeObservedAt"))metadata.put(key,"");
             metadata.putAll(crossplay.metadata(id));String xuid=crossplay.xuid(id);if(!xuid.isBlank())tokens.add(Crypto.token("xuid",xuid,identitySecret));
             BridgeServer.Snapshot s=bridge==null?null:bridge.get(xuid);if(s!=null&&snapshotMatches(id,s.data()))extract(s.data(),metadata,tokens);
         }else{
@@ -181,6 +188,13 @@ public final class SimpleAdminLite extends JavaPlugin implements Listener,Comman
     @EventHandler(priority=EventPriority.HIGHEST,ignoreCancelled=true)public void interact(PlayerInteractEvent e){if(restricted(e.getPlayer(),"interactions")){e.setCancelled(true);denied(e.getPlayer());}}
     @EventHandler(priority=EventPriority.HIGHEST,ignoreCancelled=true)public void interactEntity(PlayerInteractEntityEvent e){if(restricted(e.getPlayer(),"interactions")){e.setCancelled(true);denied(e.getPlayer());}}
     @EventHandler(priority=EventPriority.HIGHEST,ignoreCancelled=true)public void inventory(InventoryOpenEvent e){if(e.getPlayer() instanceof Player p&&restricted(p,"inventory")&&!(e.getInventory().getHolder() instanceof Menus.View)){e.setCancelled(true);denied(p);}}
+    @EventHandler(priority=EventPriority.HIGHEST,ignoreCancelled=true)public void inventoryClick(InventoryClickEvent e){if(e.getWhoClicked() instanceof Player p&&restricted(p,"inventory")&&!(e.getView().getTopInventory().getHolder() instanceof Menus.View)){e.setCancelled(true);denied(p);}}
+    @EventHandler(priority=EventPriority.HIGHEST,ignoreCancelled=true)public void inventoryDrag(InventoryDragEvent e){if(e.getWhoClicked() instanceof Player p&&restricted(p,"inventory")&&!(e.getView().getTopInventory().getHolder() instanceof Menus.View)){e.setCancelled(true);denied(p);}}
+    @EventHandler(priority=EventPriority.HIGHEST,ignoreCancelled=true)public void drop(PlayerDropItemEvent e){if(restricted(e.getPlayer(),"inventory")){e.setCancelled(true);denied(e.getPlayer());}}
+    @EventHandler(priority=EventPriority.HIGHEST,ignoreCancelled=true)public void swap(PlayerSwapHandItemsEvent e){if(restricted(e.getPlayer(),"inventory")){e.setCancelled(true);denied(e.getPlayer());}}
+    @EventHandler(priority=EventPriority.HIGHEST,ignoreCancelled=true)public void pickup(EntityPickupItemEvent e){if(e.getEntity() instanceof Player p&&restricted(p,"inventory"))e.setCancelled(true);}
+    @EventHandler(priority=EventPriority.HIGHEST,ignoreCancelled=true)public void bucketFill(PlayerBucketFillEvent e){if(restricted(e.getPlayer(),"building")){e.setCancelled(true);denied(e.getPlayer());}}
+    @EventHandler(priority=EventPriority.HIGHEST,ignoreCancelled=true)public void bucketEmpty(PlayerBucketEmptyEvent e){if(restricted(e.getPlayer(),"building")){e.setCancelled(true);denied(e.getPlayer());}}
     @EventHandler(priority=EventPriority.HIGHEST,ignoreCancelled=true)public void chat(AsyncPlayerChatEvent e){if(restricted(e.getPlayer(),"chat")&&!menus.awaiting(e.getPlayer().getUniqueId())){e.setCancelled(true);sync(()->denied(e.getPlayer()));}}
     @EventHandler(priority=EventPriority.HIGHEST,ignoreCancelled=true)public void commands(PlayerCommandPreprocessEvent e){if(restricted(e.getPlayer(),"commands")&&!e.getMessage().equalsIgnoreCase("/salrestrictions")){e.setCancelled(true);denied(e.getPlayer());}}
     @EventHandler(priority=EventPriority.HIGHEST,ignoreCancelled=true)public void combat(EntityDamageByEntityEvent e){Player p=e.getDamager() instanceof Player v?v:e.getDamager() instanceof org.bukkit.entity.Projectile proj&&proj.getShooter() instanceof Player v?v:null;if(p!=null&&restricted(p,"combat")){e.setCancelled(true);denied(p);}}
@@ -195,6 +209,19 @@ public final class SimpleAdminLite extends JavaPlugin implements Listener,Comman
                 case "help"->help(sender);
                 case "reload"->{if(require(sender,"settings")){menus.closeAll();reloadConfig();loadSettings();crossplay.connect();startBridge();refreshPermissions();audit(sender.getName(),"RELOAD","Configuration reloaded");tell(sender,"Lite configuration reloaded. The profile database was retained.");}}
                 case "updates"->{if(require(sender,"updates")){updates.check();tell(sender,updates.status);}}
+                case "export"->{
+                    if(!require(sender,"transfer"))break;
+                    String actor=sender instanceof Player p?p.getUniqueId().toString():sender.getName();
+                    if(args.length==2&&args[1].equalsIgnoreCase("preview")){
+                        VanillaExport.Plan plan=VanillaExport.preview(engine);String token=UUID.randomUUID().toString().substring(0,8);exportRequests.put(actor,new ExportRequest(token,plan));
+                        tell(sender,"Minecraft export preview: "+plan.entries().size()+" known account/IP entries. Device policies and unknown future alt accounts cannot be exported.");
+                        for(VanillaExport.Entry row:plan.entries())tell(sender,Objects.toString(row.id(),row.ip())+" | "+when(row.rule().until())+" | "+row.rule().reason());
+                        tell(sender,"Confirm this exact preview with /sal export confirm "+token);
+                    }else if(args.length==3&&args[1].equalsIgnoreCase("confirm")){
+                        ExportRequest request=exportRequests.get(actor);if(request==null||!request.token().equals(args[2]))throw new IllegalArgumentException("No matching export preview; use /sal export preview");
+                        exportRequests.remove(actor);int count=VanillaExport.apply(request.plan(),engine,sender.getName());audit(sender.getName(),"VANILLA_EXPORT",count+" entries");tell(sender,"Minecraft export complete: "+count+" entries added or extended; existing stronger bans were preserved.");
+                    }else throw new IllegalArgumentException("/sal export preview | /sal export confirm <preview-token>");
+                }
                 case "player"->{if(!require(sender,"view"))break;if(!(sender instanceof Player p))throw new IllegalArgumentException("Open player menus in-game");if(args.length!=2)throw new IllegalArgumentException("/sal player <name|uuid>");UUID id=engine.resolve(args[1]);if(id==null||engine.profile(id)==null)throw new IllegalArgumentException("No registered profile found");menus.profile(p,id);}
                 case "ban"->{if(!require(sender,"ban"))break;if(args.length<6)throw new IllegalArgumentException("/sal ban <name|uuid> <account|ultra> <1h|7d|permanent> <inherit:true|false> <reason>");UUID id=engine.resolve(args[1]);if(id==null)throw new IllegalArgumentException("Use a registered player name or UUID");if(!Set.of("account","ultra").contains(args[2]))throw new IllegalArgumentException("Ban mode: account or ultra");if(!Set.of("true","false").contains(args[4]))throw new IllegalArgumentException("Inheritance must be true or false");Rule r=Rule.make(Kind.BAN,id,"",args[2],expiry(args[3],System.currentTimeMillis()),Boolean.parseBoolean(args[4]),String.join(" ",Arrays.copyOfRange(args,5,args.length)),sender.getName());task(sender,()->{engine.add(r);return r;},v->{enforce();tell(sender,"Ban saved: "+v.id());});}
                 case "unban"->{if(!require(sender,"ban"))break;if(args.length!=2)throw new IllegalArgumentException("/sal unban <rule-id>");Rule r=engine.rule(args[1]);if(r==null||!Set.of(Kind.BAN,Kind.IP,Kind.DEVICE).contains(r.kind()))throw new IllegalArgumentException("Active ban rule not found");task(sender,()->{engine.revoke(r.id(),sender.getName());return true;},v->{enforce();tell(sender,"Ban revoked, including device bindings derived from that IP ban.");});}
@@ -203,10 +230,10 @@ public final class SimpleAdminLite extends JavaPlugin implements Listener,Comman
             }
         }catch(IllegalArgumentException e){tell(sender,e.getMessage());}return true;
     }
-    private void help(CommandSender s){tell(s,"/sal — Open the security menu");tell(s,"/sal player <name|uuid> | /sal reload | /sal updates");tell(s,"/sal ban <name|uuid> <account|ultra> <duration> <true|false> <reason>");tell(s,"/sal unban <rule-id> | /sal kick <player> <reason>");}
+    private void help(CommandSender s){tell(s,"/sal — Open the security menu");tell(s,"/sal player <name|uuid> | /sal reload | /sal updates");tell(s,"/sal ban <name|uuid> <account|ultra> <duration> <true|false> <reason>");tell(s,"/sal unban <rule-id> | /sal kick <player> <reason>");tell(s,"/sal export preview | /sal export confirm <preview-token>");}
     @Override public List<String> onTabComplete(CommandSender s,Command c,String alias,String[]a){
         if(!allowed(s,"access"))return List.of();List<String>v=new ArrayList<>();
-        if(a.length==1)v.addAll(List.of("help","player","ban","unban","kick","reload","updates"));
+        if(a.length==1)v.addAll(List.of("help","player","ban","unban","kick","reload","updates","export"));
         else if(a.length==2&&Set.of("player","ban","kick").contains(a[0]))for(Profile p:engine.profiles())v.add(p.name());
         else if(a.length==3&&a[0].equals("ban"))v.addAll(List.of("account","ultra"));else if(a.length==4&&a[0].equals("ban"))v.addAll(List.of("1h","1d","7d","permanent"));else if(a.length==5&&a[0].equals("ban"))v.addAll(List.of("true","false"));
         String filter=a[a.length-1].toLowerCase(Locale.ROOT);return v.stream().filter(x->x.toLowerCase(Locale.ROOT).startsWith(filter)).limit(100).toList();

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Isolated real Paper startup/console/persistence smoke checks. Use JAVA_HOME for Java 25."""
-import argparse, hashlib, json, os, pathlib, queue, re, shutil, socket, sqlite3, subprocess, threading, time, urllib.request, zipfile
+import argparse, hashlib, json, os, pathlib, queue, re, shutil, socket, sqlite3, subprocess, threading, time, urllib.request, urllib.parse, zipfile, hmac, uuid
 
 ROOT=pathlib.Path(__file__).resolve().parents[1]
 
@@ -44,8 +44,13 @@ def check(item,crossplay=False,timeout=240):
     (work/'eula.txt').write_text('eula=true\n')
     (work/'server.properties').write_text('server-ip=127.0.0.1\nserver-port='+str(free_port())+'\nonline-mode=false\nenforce-secure-profile=false\nlevel-type=minecraft:flat\ngenerate-structures=false\nspawn-protection=0\nview-distance=2\nsimulation-distance=2\nmax-players=2\nenable-rcon=false\n')
     java=str(pathlib.Path(os.environ['JAVA_HOME'])/'bin/java') if os.environ.get('JAVA_HOME') else 'java'
+    options=[]
+    proxy=urllib.parse.urlparse(os.environ.get('HTTPS_PROXY',os.environ.get('https_proxy','')))
+    if proxy.hostname:
+        options += ['-Dhttps.proxyHost='+proxy.hostname,'-Dhttps.proxyPort='+str(proxy.port or 80),'-Dhttp.proxyHost='+proxy.hostname,'-Dhttp.proxyPort='+str(proxy.port or 80),'-Dhttp.nonProxyHosts=localhost|127.*|[::1]']
+    if os.environ.get('JAVA_TEST_TRUSTSTORE'):options += ['-Djavax.net.ssl.trustStore='+os.environ['JAVA_TEST_TRUSTSTORE']]
     lines=[];messages=queue.Queue();log=open(work/'smoke-console.log','w')
-    process=subprocess.Popen([java,'--enable-native-access=ALL-UNNAMED','-Xms256M','-Xmx1400M','-Dcom.mojang.eula.agree=true','-jar',str(jar),'--nogui'],cwd=work,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True,bufsize=1)
+    process=subprocess.Popen([java,*options,'--enable-native-access=ALL-UNNAMED','-Xms256M','-Xmx1400M','-jar',str(jar),'--nogui'],cwd=work,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True,bufsize=1)
     def reader():
         for line in process.stdout:lines.append(line);log.write(line);log.flush();messages.put(line)
     threading.Thread(target=reader,daemon=True).start()
@@ -62,12 +67,22 @@ def check(item,crossplay=False,timeout=240):
     try:
         wait(r'Done \(')
         assert any('Simple Admin Suite Lite 1.0.0 enabled' in line for line in lines),'Suite did not enable'
+        body=('timestamp='+str(int(time.time()*1000))+'\nnonce='+str(uuid.uuid4())+'\n').encode()
+        signature=hmac.new(('b'*64).encode(),body,hashlib.sha256).hexdigest()
+        req=urllib.request.Request('http://127.0.0.1:'+str(bridge_port)+'/v1/heartbeat',data=body,headers={'X-Simple-Signature':signature})
+        with urllib.request.urlopen(req,timeout=5) as response:
+            payload=response.read();assert response.headers['X-Simple-Response-Signature']==hmac.new(('b'*64).encode(),payload,hashlib.sha256).hexdigest()
+        try:urllib.request.urlopen(req,timeout=5);raise AssertionError('Bridge accepted a replay')
+        except urllib.error.HTTPError as error:assert error.code==409
         command('sal help');wait(r'Open the security menu',30)
         command('sal reload');wait(r'configuration reloaded',30)
         command('sal ban 00000000-0000-0000-0000-000000000001 account 1h true CI-test')
         line=wait(r'Ban saved: ([0-9a-f-]+)',30);rule=re.search(r'Ban saved: ([0-9a-f-]+)',line).group(1)
         db=sqlite3.connect('file:'+str(suite/'security.sqlite')+'?mode=ro',uri=True)
         assert db.execute('SELECT reason FROM rules WHERE id=?',(rule,)).fetchone()==('CI-test',);db.close()
+        command('sal export preview');preview=wait(r'export confirm ([0-9a-f]+)',30);token=re.search(r'export confirm ([0-9a-f]+)',preview).group(1)
+        command('sal export confirm '+token);wait(r'Minecraft export complete',30)
+        exported=json.loads((work/'banned-players.json').read_text());assert any(row.get('uuid')=='00000000-0000-0000-0000-000000000001' and row.get('reason')=='CI-test' for row in exported)
         command('sal unban '+rule);wait(r'Ban revoked',30)
         if crossplay:
             deadline=time.monotonic()+25

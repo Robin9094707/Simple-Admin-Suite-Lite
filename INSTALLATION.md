@@ -8,7 +8,7 @@ No Simplex files are read or migrated automatically. Imports are optional admini
 
 ## Permissions and LuckPerms
 
-Full operators have access independently of permission defaults. Non-operators require `simpleadminlite.admin` for full access, or `simpleadminlite.access` plus selected action permissions:
+Full level-4 operators have access independently of permission defaults; limited level-1/2/3 operators require explicit permission nodes. Non-operators require `simpleadminlite.admin` for full access, or `simpleadminlite.access` plus selected action permissions:
 
 | Permission suffix | Access |
 | --- | --- |
@@ -32,6 +32,8 @@ The role definitions in `config.yml` are editable from Settings. Role assignment
 ## Optional Bedrock support
 
 Geyser and Floodgate are optional. Java-only servers can use the suite without either dependency. Native Bedrock forms use the installed Floodgate API, with a Geyser API fallback, and fall back to a protected Java inventory if a forms API is unavailable.
+
+The current Geyser release emulates Java 26.3. On a Paper 1.21.11 server, install ViaVersion as required by Geyser's official setup instructions: https://geysermc.org/wiki/geyser/supported-versions/ . Lite itself does not require ViaVersion for Java-only use. Its updater skips new Geyser staging on servers below 26.3 when ViaVersion is absent.
 
 For extended Bedrock device observations:
 
@@ -74,7 +76,7 @@ For Java text entry, responses are captured privately, one field at a time. Type
 
 Open **Import / export bans** and choose a source. No row is selected initially. Inspect individual rows and exclusions, select specific rows or all supported rows, then confirm. Previews expire after ten minutes. Imports are transactional and idempotent: the same external record is not imported twice, even if a previously imported rule was later revoked. Expired, inactive, malformed and unsupported wildcard IP rows are skipped. Reasons and millisecond expiries are retained. An account-only LiteBans row's stored IP is never converted into an IP ban.
 
-For LiteBans, configure a local **closed, consistent** H2 `.mv.db` or SQLite snapshot path and table prefix. The file is opened read-only. Live locked H2 files, encrypted files, remote MySQL/MariaDB, and incompatible older H2 formats are not silently converted or modified. Produce a compatible local snapshot/export for these cases. The default H2 connection uses username `sa` and an empty password. Source plugin bans remain controlled by the source plugin until you remove or disable that plugin separately.
+For LiteBans, configure a local **closed, consistent** H2 `.mv.db` or SQLite snapshot path and table prefix. The file is opened read-only. Live locked H2 files, encrypted files, remote MySQL/MariaDB, and incompatible older H2 formats are not silently converted or modified. Produce a compatible local snapshot/export for these cases. The default H2 connection uses username `sa` and an empty password; `imports.h2-username` and `imports.h2-password` can be configured for an authenticated snapshot. Source plugin bans remain controlled by the source plugin until you remove or disable that plugin separately.
 
 ## Export before removing Lite
 
