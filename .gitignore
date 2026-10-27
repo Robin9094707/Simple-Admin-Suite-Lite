@@ -1,0 +1,7 @@
+.deps/
+build/
+dist/
+**/target/
+*.log
+*.sqlite*
+!**/fixtures/**

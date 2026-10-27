@@ -1,0 +1,63 @@
+# Simple Admin Suite Lite 1.0.0. All built-in interfaces and documentation are English.
+# This is an independent installation, with no automatic migration from any Simplex plugin.
+prefix: '&8[&bSimple&8] &f'
+# Generated on first start. Keep this stable: it keys the hashes of stored client identifiers.
+identity-secret: ''
+history:
+  # Independent limit for each history type: IP, device, Xbox account, self-signed ID.
+  per-type-limit: 64
+bridge:
+  enabled: true
+  host: 127.0.0.1
+  port: 39093
+  # Generated on first start; copy bridge-link.properties to the Geyser extension.
+  shared-secret: ''
+updates:
+  # Check installed Geyser-Spigot and Floodgate every hour, then stage verified updates.
+  # Updates are applied by Paper on a later normal restart. Lite never restarts the server.
+  hourly-check: true
+imports:
+  # Use a consistent, closed local snapshot; Lite opens it read-only and never migrates it.
+  litebans-file: plugins/LiteBans/litebans.mv.db
+  litebans-table-prefix: litebans_
+discord-webhook:
+  enabled: false
+  url: ''
+client-checks:
+  # Exact reported brand/channel access rules, not proof that a player is cheating.
+  # No probing, automatic identity links, packet modification or automatic bans.
+  enabled: false
+  kick-on-match: false
+  denied-brands: []
+  denied-channels: []
+roles:
+  viewer:
+    - simpleadminlite.access
+    - simpleadminlite.view
+    - simpleadminlite.devices
+  moderator:
+    - simpleadminlite.access
+    - simpleadminlite.view
+    - simpleadminlite.devices
+    - simpleadminlite.kick
+    - simpleadminlite.ban
+    - simpleadminlite.restrictions
+  administrator:
+    - simpleadminlite.admin
+restriction-templates:
+  text:
+    - chat
+    - commands
+  building:
+    - building
+  interactions:
+    - interactions
+  inventory:
+    - inventory
+  peaceful:
+    - combat
+  frozen-actions:
+    - building
+    - interactions
+    - inventory
+    - combat

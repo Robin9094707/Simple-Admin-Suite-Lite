@@ -1,0 +1,77 @@
+[
+  {
+    "name": "ecj-3.46.0.jar",
+    "url": "https://repo.maven.apache.org/maven2/org/eclipse/jdt/ecj/3.46.0/ecj-3.46.0.jar",
+    "sha256": "d0d43f8e2d7003e5efed612e2cbb5f01870043397d8f1bbe536fd9128f4fcbf7"
+  },
+  {
+    "name": "adventure-api-5.2.0.jar",
+    "url": "https://repo.maven.apache.org/maven2/net/kyori/adventure-api/5.2.0/adventure-api-5.2.0.jar",
+    "sha256": "7e52fe7190be3e87b3b3f71712cfa12315fcd27109f302a7b440c12f01fae827"
+  },
+  {
+    "name": "adventure-key-5.2.0.jar",
+    "url": "https://repo.maven.apache.org/maven2/net/kyori/adventure-key/5.2.0/adventure-key-5.2.0.jar",
+    "sha256": "0184d173200e2eef8fbc791f622d1d58fd459f8930c616b5a4fe79e83eda6c55"
+  },
+  {
+    "name": "annotations-26.0.2.jar",
+    "url": "https://repo.maven.apache.org/maven2/org/jetbrains/annotations/26.0.2/annotations-26.0.2.jar",
+    "sha256": "2037be378980d3ba9333e97955f3b2cde392aa124d04ca73ce2eee6657199297"
+  },
+  {
+    "name": "slf4j-api-2.0.17.jar",
+    "url": "https://repo.maven.apache.org/maven2/org/slf4j/slf4j-api/2.0.17/slf4j-api-2.0.17.jar",
+    "sha256": "7b751d952061954d5abfed7181c1f645d336091b679891591d63329c622eb832"
+  },
+  {
+    "name": "snakeyaml-2.2.jar",
+    "url": "https://repo.maven.apache.org/maven2/org/yaml/snakeyaml/2.2/snakeyaml-2.2.jar",
+    "sha256": "1467931448a0817696ae2805b7b8b20bfb082652bf9c4efaed528930dc49389b"
+  },
+  {
+    "name": "bungeecord-chat-1.21-R0.2-deprecated-build.21.jar",
+    "url": "https://artifactory.papermc.io/ui/api/v1/download?repoKey=universe&path=net%2Fmd-5%2Fbungeecord-chat%2F1.21-R0.2-deprecated%2Bbuild.21%2Fbungeecord-chat-1.21-R0.2-deprecated%2Bbuild.21.jar",
+    "sha256": "ce930b3ee048520a0ab538eb8d1627b301367fc1b300837235387aded6d89ba1"
+  },
+  {
+    "name": "guava-33.4.8-jre.jar",
+    "url": "https://repo.maven.apache.org/maven2/com/google/guava/guava/33.4.8-jre/guava-33.4.8-jre.jar",
+    "sha256": "f3d7f57f67fd622f4d468dfdd692b3a5e3909246c28017ac3263405f0fe617ed"
+  },
+  {
+    "name": "paper-api-1.21.11.jar",
+    "url": "https://repo.papermc.io/repository/maven-public/io/papermc/paper/paper-api/1.21.11-R0.1-SNAPSHOT/paper-api-1.21.11-R0.1-20260511.115010-91.jar",
+    "sha256": "c577b181c11a8674310e56c92a91e31c010b7f04c9bd10b91c3be18374401070"
+  },
+  {
+    "name": "gson-2.13.2.jar",
+    "url": "https://repo.maven.apache.org/maven2/com/google/code/gson/gson/2.13.2/gson-2.13.2.jar",
+    "sha256": "dd0ce1b55a3ed2080cb70f9c655850cda86c206862310009dcb5e5c95265a5e0"
+  },
+  {
+    "name": "junit-platform-console-standalone-1.14.0.jar",
+    "url": "https://repo.maven.apache.org/maven2/org/junit/platform/junit-platform-console-standalone/1.14.0/junit-platform-console-standalone-1.14.0.jar",
+    "sha256": "097022055fe55a34b33b868be077629190d4a1c66c571478338686074ccf6e97"
+  },
+  {
+    "name": "h2-2.4.240.jar",
+    "url": "https://repo.maven.apache.org/maven2/com/h2database/h2/2.4.240/h2-2.4.240.jar",
+    "sha256": "29b70e427cc1c40cdc376283adbb0cc62853073797bb5fe5761f81fe73d57ce0"
+  },
+  {
+    "name": "sqlite-jdbc-3.53.4.0.jar",
+    "url": "https://repo.maven.apache.org/maven2/org/xerial/sqlite-jdbc/3.53.4.0/sqlite-jdbc-3.53.4.0.jar",
+    "sha256": "bcb1f51e36f940867e83342f9efbf5968ac44a6bef4d397bb4af7b17b45cd2fb"
+  },
+  {
+    "name": "paper-api-26.3.jar",
+    "url": "https://artifactory.papermc.io/ui/api/v1/download?repoKey=universe&path=io%2Fpapermc%2Fpaper%2Fpaper-api%2F26.3.build.218-stable%2Fpaper-api-26.3.build.218-stable.jar",
+    "sha256": "efc552876e71485febcd0e5248c41318a4a4d50ae29cfcdf90398406508257b3"
+  },
+  {
+    "name": "Geyser-Spigot-2.12.1-1273.jar",
+    "url": "https://download.geysermc.org/v2/projects/geyser/versions/2.12.1/builds/1273/downloads/spigot",
+    "sha256": "218f57088fd7a147f670c489377da2341fc51f1867b2c36ed181f39c9f379b59"
+  }
+]

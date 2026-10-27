@@ -1,0 +1,59 @@
+name: SimpleAdminSuiteLite
+version: 1.0.0
+main: io.github.robin9094707.simpleadminlite.SimpleAdminLite
+api-version: '1.21.11'
+description: Independent English-only player moderation, device insight and account security.
+authors: [Robin9094707]
+website: https://github.com/Robin9094707/Simple-Admin-Suite-Lite
+softdepend: [LuckPerms, floodgate, Geyser-Spigot]
+commands:
+  sal:
+    description: Open the Simple Admin Suite Lite security menu.
+    aliases: [simpleadminlite, simplelite]
+    usage: /sal
+  salrestrictions:
+    description: Show your currently effective local permission and action restrictions.
+    usage: /salrestrictions
+permissions:
+  simpleadminlite.admin:
+    description: Full access to the Lite suite. Assign deliberately through LuckPerms.
+    default: false
+  simpleadminlite.access:
+    description: Open the security menu.
+    default: false
+  simpleadminlite.view:
+    description: View player profiles and account links.
+    default: false
+  simpleadminlite.devices:
+    description: Inspect reported client details, saved IPs and Bedrock devices.
+    default: false
+  simpleadminlite.ban:
+    description: Create and revoke real account, ultra, IP and device bans.
+    default: false
+  simpleadminlite.kick:
+    description: Kick online players.
+    default: false
+  simpleadminlite.links:
+    description: Confirm or exclude account links and their inherited effects.
+    default: false
+  simpleadminlite.permissions:
+    description: Grant or deny arbitrary player permissions. Highly privileged.
+    default: false
+  simpleadminlite.roles:
+    description: Assign or revoke local admin roles. Highly privileged.
+    default: false
+  simpleadminlite.restrictions:
+    description: Apply and revoke timed action restriction templates.
+    default: false
+  simpleadminlite.transfer:
+    description: Inspect and import selected external bans or export to Minecraft.
+    default: false
+  simpleadminlite.updates:
+    description: Check and stage compatible Geyser and Floodgate updates.
+    default: false
+  simpleadminlite.settings:
+    description: Edit suite settings, role definitions, templates and reload. Highly privileged.
+    default: false
+  simpleadminlite.audit:
+    description: Inspect the local security audit.
+    default: false

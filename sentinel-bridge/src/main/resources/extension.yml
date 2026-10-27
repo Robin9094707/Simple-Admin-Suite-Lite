@@ -1,0 +1,6 @@
+id: simplesentinelbridge
+name: SimpleSentinelBridge
+version: 1.0.0
+main: io.github.robin9094707.simplesentinelbridge.SimpleSentinelBridge
+api: 2.4.0
+authors: [Robin9094707]
